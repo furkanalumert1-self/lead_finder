@@ -54,8 +54,19 @@ async def tick(registry, now_utc: datetime | None = None) -> list[int]:
     return claimed
 
 
-async def worker(client_factory, *, enabled: bool) -> None:
-    """Recover runs a restart interrupted, then tick every minute while `enabled`."""
+async def cron(registry, now_utc: datetime | None = None) -> dict:
+    """One external tick (Vercel Cron): close runs a killed function left open, then start what is
+    due. The slot claim keeps a retried or doubled cron delivery from running a day twice."""
+    recovered = await runs.recover_interrupted(runs.STALE_AFTER)
+    started = await tick(registry, now_utc)
+    return {"recovered": recovered, "started": started}
+
+
+async def worker(client_factory, *, enabled: bool, serverless: bool = False) -> None:
+    """Recover runs a restart interrupted, then tick every minute while `enabled`. Serverless
+    instances do neither: many run at once and none lives long; the cron route does both."""
+    if serverless:
+        return
     try:
         recovered = await runs.recover_interrupted()
         if recovered:

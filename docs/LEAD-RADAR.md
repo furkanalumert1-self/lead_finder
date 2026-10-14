@@ -97,6 +97,51 @@ yeniden başlatmada yarıda kalan koşu “başarısız / yarıda kaldı” olar
 Tek uvicorn worker ile çalıştırın. `TREG_LEADS_SCHEDULER=0` zamanlamayı tamamen kapatır.
 Zamanlama canlı bir LLM ajanı çalıştırmaz; Run düğmesiyle aynı deterministik akıştır.
 
+## Vercel'de çalıştırma (vercel.app linki)
+
+Vercel'de uygulama **sunucusuz modda** çalışır: tarama, “Çalıştır”a basıldığı istekte biter (en
+fazla ~5 dk); günlük zamanlama Vercel Cron ile her gün 06:00 UTC'de (İstanbul 09:00) bir kez tetiklenir;
+veri Postgres'te durur. Repo hazır: `app.py` (giriş noktası), `vercel.json` (`/` → `/leads`, cron),
+`.vercelignore`, `requirements.txt` ve derlenmiş panel (`src/treg/web/dashboard`).
+
+1. **Proje:** Vercel → Add New → Project → `lead_finder` reposu, dal `claude/zen-darwin-82ycf9`.
+   **Application/Framework Preset: FastAPI.** Root Directory: `./` (boş). Build/Install komutlarını
+   değiştirmeyin.
+2. **Veritabanı:** Projede Storage → **Neon (Postgres)** ekleyin ve projeye bağlayın. Vercel
+   `DATABASE_URL` vb. değişkenleri ekler.
+3. **Ortam değişkenleri** (Settings → Environment Variables, Production):
+
+   | Değişken | Değer |
+   |---|---|
+   | `TREG_DATABASE_URL` | Neon'un `DATABASE_URL` değeri (`postgres://…?sslmode=require` olduğu gibi kalabilir) |
+   | `TREG_SECRET_KEY` | `uv run python -m treg keygen` çıktısı — **saklayın**, kaybolursa kayıtlı anahtarlar çözülemez |
+   | `TREG_PUBLIC_URL` | `https://<proje-adınız>.vercel.app` |
+   | `TREG_LEADS_SERVERLESS` | `1` |
+   | `TREG_FIXED_LOGIN_CODES` | `e-postanız=<giriş kodunun sha256'sı>` (aşağıda) |
+   | `TREG_API_TOKEN` | uzun rastgele bir değer |
+   | `CRON_SECRET` | uzun rastgele bir değer (Vercel Cron bunu otomatik gönderir) |
+   | `TREG_TELEMETRY` / `DO_NOT_TRACK` | `0` / `1` |
+   | `TREG_LEADS_TOKEN` | 6. adımdan sonra eklenecek |
+
+   Giriş kodu: e-posta göndermeden yalnızca sizin bildiğiniz kodla giriş yapılır. Uzun bir kod seçip
+   özetini alın: `printf %s 'UZUN-GİZLİ-KOD' | sha256sum` → `siz@sirket.com=<64 karakter>`.
+   Kodun kendisini değil yalnızca özetini Vercel'e girin.
+4. **Tabloları oluşturun** (bir kez ve her güncellemeden sonra, kendi bilgisayarınızdan):
+   `TREG_DATABASE_URL='<Neon adresi>' TREG_SECRET_KEY='<aynı anahtar>' uv run python -m treg upgrade`
+   — Uygulama, veritabanı geride kalırsa açılmayı reddeder.
+5. **Deploy** edin; `https://<proje>.vercel.app` açılınca `/app` üzerinden e-postanız + giriş kodunuzla
+   girin ve bir takım oluşturun. Lead Radar: `https://<proje>.vercel.app/leads`.
+6. **Gerçek kaynaklar ve cron için token:** `/app` → takım → API anahtarları → yeni anahtar; değeri
+   `TREG_LEADS_TOKEN` olarak ekleyip yeniden deploy edin. Sonra Kaynaklar sayfasından Tavily/Hunter
+   anahtarınızı girin.
+
+Notlar: Panel ve API girişsiz erişime kapalıdır (401); ancak adres herkese açıktır, giriş kodunu
+paylaşmayın. Upstream Treg'in tanıtım sayfaları da aynı alan adında açık kalır. Hobby planında cron
+günde bir kez ve ±1 saat sapmayla çalışır; kampanyanın saati 09 veya daha erken olmalıdır. Arayüzü
+değiştirdiğinizde `scripts/vercel-prepare.sh` çalıştırıp çıkan dosyaları commit edin. Yerel
+`backup/restore` betiği yalnızca SQLite içindir; Neon'un kendi yedek/geri yükleme (branch) özelliğini
+kullanın.
+
 ## Uzaktan kişisel kullanım (yalnızca gerekirse)
 
 Varsayılan yerel kullanımdır. Kendi sunucunuza taşıyacaksanız (public yayın yapmadan):

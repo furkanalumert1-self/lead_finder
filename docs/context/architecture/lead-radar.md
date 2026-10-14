@@ -14,6 +14,9 @@ sources:
   - src/treg/bootstrap.py
   - frontend/src/leads/
   - scripts/lead-radar.sh
+  - scripts/vercel-prepare.sh
+  - app.py
+  - src/treg/config.py
   - tests/test_leads.py
 related:
   - architecture/proxy-model.md
@@ -59,3 +62,13 @@ score but never changes `status` or `note`. The scheduler runs in the server pro
 (`ROLE_BACKGROUND_TASKS`): it claims `(campaign_id, slot=local date)` before spending, so a restart
 or a second worker cannot start the same day twice, and at startup it marks runs a restart
 interrupted as failed and their open reservations as uncertain.
+
+## Serverless (Vercel)
+
+With `leads_serverless` (TREG_LEADS_SERVERLESS) a run finishes inside the request that started it,
+because a function may be frozen once it answers; no in-process scheduler or startup recovery runs,
+since many short-lived instances share the database. `GET /leads/api/cron` (Vercel Cron, `Bearer
+CRON_SECRET`; 404 without a secret) closes runs older than `STALE_AFTER` and ticks the schedule; the
+slot claim still guarantees one run per campaign per day. `app.py` puts `src/` on the path and
+`requirements.txt` carries the `[server]` dependencies. The database URL validator also rewrites
+libpq's `sslmode` to asyncpg's `ssl` and drops `channel_binding`, which hosted Postgres URLs carry.

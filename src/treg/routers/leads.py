@@ -6,11 +6,15 @@ every query by that team. Reads need membership; writes need `member` or above.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, Cookie, Depends, HTTPException, Request
+import hmac
+import os
+
+from fastapi import APIRouter, Body, Cookie, Depends, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..application.leads import service
+from ..application.leads import scheduler, service
+from ..config import get_settings as _config
 from ..application.leads.providers import default_registry
 from ..domain.identity import session as sess
 from ..domain.identity.access import Caller, _require_can_register, _user_from_session, require_member
@@ -112,7 +116,20 @@ async def delete_campaign(campaign_id: int, caller: Caller = Depends(require_mem
 
 @app.post("/leads/api/campaigns/{campaign_id}/run")
 async def run_campaign(campaign_id: int, request: Request, caller: Caller = Depends(require_member)) -> dict:
-    return await _do(service.start_run(_writer(caller).org_id, campaign_id, _registry(request)))
+    return await _do(service.start_run(_writer(caller).org_id, campaign_id, _registry(request),
+                                       inline=_config().leads_serverless))
+
+
+@app.get("/leads/api/cron", include_in_schema=False)
+async def cron(request: Request, authorization: str = Header(default="")) -> dict:
+    """Vercel Cron's daily tick. Vercel sends `Authorization: Bearer $CRON_SECRET`; without a
+    configured secret the route does not exist, so it can never be triggered anonymously."""
+    secret = os.environ.get("CRON_SECRET", "")
+    if not secret or not _config().leads_serverless:
+        raise HTTPException(404)
+    if not hmac.compare_digest(authorization.encode(), f"Bearer {secret}".encode()):
+        raise HTTPException(401, "bad cron secret")
+    return await scheduler.cron(_registry(request))
 
 
 @app.get("/leads/api/runs")

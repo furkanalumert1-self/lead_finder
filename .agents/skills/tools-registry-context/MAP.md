@@ -17,6 +17,7 @@ Regenerate via `scripts/build-map.py`.
 | `.github/workflows/ci.yml` | architecture/import-boundaries.md |
 | `README.md` | foundation/charter.md |
 | `alembic.ini` | architecture/data-model.md |
+| `app.py` | architecture/lead-radar.md |
 | `assets/brand/og-card.html` | interface/seo.md |
 | `deploy/render.example.yaml` | ops/deploy.md |
 | `docs/hub-recipes/data-csv/run.js` | architecture/hub.md |
@@ -96,6 +97,7 @@ Regenerate via `scripts/build-map.py`.
 | `scripts/search_agent_bench.py` | architecture/search-experiment.md |
 | `scripts/search_experiment_report.sql` | architecture/search-experiment.md |
 | `scripts/smoke_archive_r2.py` | architecture/archive.md |
+| `scripts/vercel-prepare.sh` | architecture/lead-radar.md |
 | `src/treg/__main__.py` | ops/deploy.md |
 | `src/treg/adsconv.py` | architecture/ads-conversions.md |
 | `src/treg/agent_pages.py` | interface/seo.md |
@@ -374,7 +376,7 @@ Regenerate via `scripts/build-map.py`.
 | `src/treg/cli_analytics.py` | interface/cli.md |
 | `src/treg/client_identity.py` | architecture/import-boundaries.md, architecture/proxy-model.md, interface/api.md |
 | `src/treg/client_ip.py` | architecture/multi-tenancy.md |
-| `src/treg/config.py` | architecture/archive.md, architecture/auth-secrets.md, architecture/feedback.md, architecture/org-concurrency.md, architecture/super-admin.md, architecture/table.md, guides/expanding-a-category.md, interface/web-arena.md, ops/deploy.md |
+| `src/treg/config.py` | architecture/archive.md, architecture/auth-secrets.md, architecture/feedback.md, architecture/lead-radar.md, architecture/org-concurrency.md, architecture/super-admin.md, architecture/table.md, guides/expanding-a-category.md, interface/web-arena.md, ops/deploy.md |
 | `src/treg/convert.py` | interface/cli.md |
 | `src/treg/crypto.py` | architecture/auth-secrets.md |
 | `src/treg/domain/__init__.py` | architecture/import-boundaries.md |
@@ -725,7 +727,7 @@ Regenerate via `scripts/build-map.py`.
 | `architecture/hub.md` | `__init__.py`, `manifest.py`, `refs.py`, `graph.py`, `__init__.py`, `runner.py`, `sandbox.py`, `limits.py`, `health.py`, `hub_sandbox.py`, `hub.py`, `catalog.py`, `web.py`, `hub_gate.py`, `service.py`, `__init__.py`, `mcp.py`, `hub.js`, `HubPage.vue`, `HubRunPage.vue`, `cli.py`, `worker.py`, `models.py`, `index.html`, `skill.md`, `llms.txt`, `0044_hub_tools.py`, `0045_hub_runs.py`, `0046_hubtool_check_result.py`, `0047_hubrun_output.py`, `0048_hubtool_data.py`, `0049_hubtool_listed_public_log.py`, `0050_hub_listing.py`, `run.js`, `run.js`, `run.js`, `test_hub.py`, `test_hub_sandbox.py`, `test_hub_run.py` |
 | `architecture/import-boundaries.md` | `pyproject.toml`, `ci.yml`, `__init__.py`, `__init__.py`, `access.py`, `authorize.py`, `idempotency.py`, `overflow.py`, `route.py`, `__init__.py`, `intake.py`, `resolve.py`, `reserve.py`, `settle.py`, `evidence.py`, `service.py`, `types.py`, `client_identity.py`, `__init__.py`, `__init__.py`, `access.py`, `budgets.py`, `publicdemo.py`, `teams.py`, `usage.py`, `__init__.py`, `__init__.py`, `authorization.py`, `oauth_flow.py`, `refresh.py`, `__init__.py`, `__init__.py`, `__init__.py`, `__init__.py`, `__init__.py`, `injectors.py`, `relay.py`, `__init__.py`, `limiter.py`, `test_call_architecture.py`, `test_import_lightness.py` |
 | `architecture/instagram-oauth.md` | `catalog_ingest.py`, `access.py`, `resolve.py`, `service.py`, `instagram.yaml`, `instagram.extended.yaml`, `cli.py`, `store.py`, `authorization.py`, `oauth_flow.py`, `oauth_exchange.py`, `mcp.py`, `call.py`, `connections.js`, `ProviderPage.vue`, `0010_oauth_authorization_method.py`, `test_instagram_oauth_architecture.py` |
-| `architecture/lead-radar.md` | `rules.py`, `providers.py`, `budget.py`, `runs.py`, `scheduler.py`, `service.py`, `leads.py`, `models.py`, `0073_lead_radar.py`, `bootstrap.py`, `leads`, `lead-radar.sh`, `test_leads.py` |
+| `architecture/lead-radar.md` | `rules.py`, `providers.py`, `budget.py`, `runs.py`, `scheduler.py`, `service.py`, `leads.py`, `models.py`, `0073_lead_radar.py`, `bootstrap.py`, `leads`, `lead-radar.sh`, `vercel-prepare.sh`, `app.py`, `config.py`, `test_leads.py` |
 | `architecture/local-proxy.md` | `localproxy.py`, `server.js` |
 | `architecture/local-run.md` | `localrun.py`, `egress.py`, `fsjail.py` |
 | `architecture/mcp-oauth.md` | `auth.py`, `mcp.py`, `health.py`, `mcp_oauth.py`, `session.py`, `access.py`, `api_keys.py`, `api_keys.py`, `auth.py`, `claude-connector.html`, `connect-demo.html`, `test_mcp.py`, `test_mcp_oauth.py`, `test_mcp_directory.py`, `test_marketplace_call.py` |

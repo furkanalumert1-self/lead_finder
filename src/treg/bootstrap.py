@@ -380,6 +380,7 @@ _CONTROL_ROUTE_KEYS: frozenset[RouteKey] = frozenset({
     # Lead Radar: the page and its team-scoped API (routers/leads.py).
     ('/leads', ('GET',), 'leads_page'),
     ('/leads/api/campaigns', ('GET',), 'list_campaigns'),
+    ('/leads/api/cron', ('GET',), 'cron'),
     ('/leads/api/campaigns', ('POST',), 'create_campaign'),
     ('/leads/api/campaigns/{campaign_id}', ('DELETE',), 'delete_campaign'),
     ('/leads/api/campaigns/{campaign_id}', ('PUT',), 'update_campaign'),
@@ -725,7 +726,8 @@ def _lifespan(role: AppRole):
             # Lead Radar: recover runs a restart interrupted, then (if enabled) the daily schedule.
             leads_task = (
                 asyncio.create_task(leads_scheduler.worker(
-                    lambda: app.state.http, enabled=get_settings().leads_scheduler))
+                    lambda: app.state.http, enabled=get_settings().leads_scheduler,
+                    serverless=get_settings().leads_serverless))
                 if ROLE_BACKGROUND_TASKS[role] else None
             )
             # Local transaction diagnostics run even when the analytics transport is disabled.

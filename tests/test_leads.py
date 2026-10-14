@@ -289,3 +289,53 @@ async def test_settings_and_sources_show_missing_keys(clients):
     saved = (await c.put("/leads/api/settings", json={"day_limit_micro": 500_000, "month_limit_micro": 5_000_000,
                                                       "cache_ttl_hours": {"search": 6}})).json()
     assert saved["cache_ttl_hours"]["search"] == 6 and saved["day_limit_micro"] == 500_000
+
+
+# ---- serverless (Vercel) -----------------------------------------------------------------------
+
+async def test_serverless_run_finishes_inside_the_request(clients, monkeypatch):
+    from treg.config import get_settings
+    monkeypatch.setattr(get_settings(), "leads_serverless", True)
+    c = clients
+    cid = (await c.post("/leads/api/campaigns", json={"name": "V", "queries": ["stok"]})).json()["id"]
+    run = (await c.post(f"/leads/api/campaigns/{cid}/run")).json()
+    assert run["status"] == "succeeded" and run["candidates"] > 0 and not runs._tasks
+
+
+async def test_cron_needs_its_secret_and_never_runs_a_day_twice(clients, monkeypatch):
+    from treg.config import get_settings
+    c = clients
+    monkeypatch.setattr(get_settings(), "leads_serverless", True)
+    monkeypatch.delenv("CRON_SECRET", raising=False)
+    assert (await c.get("/leads/api/cron")).status_code == 404
+    monkeypatch.setenv("CRON_SECRET", "s3cret-value")
+    assert (await c.get("/leads/api/cron", headers={"Authorization": "Bearer nope"})).status_code == 401
+    await c.post("/leads/api/campaigns", json={"name": "D", "queries": ["stok"], "status": "active",
+                                               "schedule_daily": True, "schedule_hour": 0})
+    ok = {"Authorization": "Bearer s3cret-value"}
+    first = (await c.get("/leads/api/cron", headers=ok)).json()
+    second = (await c.get("/leads/api/cron", headers=ok)).json()
+    assert len(first["started"]) == 1 and second["started"] == []
+
+
+async def test_stale_recovery_leaves_a_live_run_alone(clients):
+    org = await _org_id("tim@superdesign.dev")
+    registry = Registry(discovery={"demo": DemoDiscovery()})
+    camp = await service.save_campaign(org, {"name": "R", "queries": ["x"]}, registry)
+    async with session_maker() as db:
+        live = LeadRun(org_id=org, campaign_id=camp["id"], status="running")
+        dead = LeadRun(org_id=org, campaign_id=camp["id"], status="running",
+                       created_at=datetime(2026, 1, 1))
+        db.add_all([live, dead])
+        await db.commit()
+        live_id, dead_id = live.id, dead.id
+    assert await runs.recover_interrupted(runs.STALE_AFTER) == 1
+    async with session_maker() as db:
+        assert (await db.get(LeadRun, live_id)).status == "running"
+        assert (await db.get(LeadRun, dead_id)).status == "failed"
+
+
+def test_hosted_postgres_urls_are_translated_for_asyncpg():
+    from treg.config import Settings
+    url = Settings(database_url="postgres://u:p@h.neon.tech/db?sslmode=require&channel_binding=require").database_url
+    assert url == "postgresql+asyncpg://u:p@h.neon.tech/db?ssl=require"

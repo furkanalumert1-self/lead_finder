@@ -173,7 +173,11 @@ async def delete_campaign(org_id: int, campaign_id: int) -> None:
         await db.commit()
 
 
-async def start_run(org_id: int, campaign_id: int, registry: Registry) -> dict:
+async def start_run(org_id: int, campaign_id: int, registry: Registry, *, inline: bool = False) -> dict:
+    """Start a run. `inline` (serverless) finishes it inside this request, because a function may be
+    frozen the moment it answers; otherwise it runs as a task in this long-lived process."""
+    if inline:
+        await runs.recover_interrupted(runs.STALE_AFTER)   # a killed function's run must not block
     async with session_maker() as db:
         c = await _owned(db, LeadCampaign, campaign_id, org_id)
         busy = (await db.execute(select(LeadRun.id).where(
@@ -187,8 +191,12 @@ async def start_run(org_id: int, campaign_id: int, registry: Registry) -> dict:
         db.add(run)
         await db.commit()
         view = run_view(run)
-    runs.spawn(view["id"], registry)
-    return view
+    if not inline:
+        runs.spawn(view["id"], registry)
+        return view
+    await runs.execute(view["id"], registry)
+    async with session_maker() as db:
+        return run_view(await db.get(LeadRun, view["id"]))
 
 
 async def stop_run(org_id: int, run_id: int) -> dict:

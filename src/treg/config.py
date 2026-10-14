@@ -196,6 +196,13 @@ class Settings(BaseSettings):
             v = "postgresql://" + v[len("postgres://") :]
         if v.startswith("postgresql://"):
             v = "postgresql+asyncpg://" + v[len("postgresql://") :]
+        if v.startswith("postgresql+asyncpg://") and "?" in v:
+            # libpq spellings (Neon, Vercel Postgres) that asyncpg refuses as connect() arguments:
+            # `sslmode` is asyncpg's `ssl`, and `channel_binding` has no asyncpg equivalent.
+            base, _, query = v.partition("?")
+            params = [p for p in query.split("&") if p and not p.startswith("channel_binding=")]
+            params = ["ssl=" + p.split("=", 1)[1] if p.startswith("sslmode=") else p for p in params]
+            v = base + ("?" + "&".join(params) if params else "")
         return v
 
     @field_validator("read_database_url")
@@ -917,6 +924,9 @@ class Settings(BaseSettings):
     # Lead Radar's daily campaign schedule (Europe/Istanbul), in the server process. Campaigns opt
     # in one by one; this switch turns the whole schedule off.
     leads_scheduler: bool = True
+    # Serverless hosting (Vercel): a run finishes inside the request that started it, no in-process
+    # scheduler or startup recovery runs, and `/leads/api/cron` (Vercel Cron, CRON_SECRET) ticks.
+    leads_serverless: bool = False
     # Where the bootstrapped token is written so the CLI/installer can pick it up (0600).
     single_user_token_file: str = "~/.treg/local-token"
 

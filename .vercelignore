@@ -1,0 +1,26 @@
+# Only the server, its built dashboard and requirements.txt go to Vercel (250 MB function limit).
+.venv
+.env
+*.db
+backups
+frontend
+tests
+docs
+marketing
+examples
+plugin
+plugins
+packages
+dsh
+deploy
+assets
+scripts
+e2e-server.sh
+e2e_check.py
+package.json
+uv.lock
+pyproject.toml
+src/treg/web/media/ugc
+src/treg/web/media/jev
+src/treg/web/media/astra
+src/treg/web/media/*.mp4

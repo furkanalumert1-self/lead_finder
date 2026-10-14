@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/", "destination": "/leads", "permanent": false }
+  ],
+  "crons": [
+    { "path": "/leads/api/cron", "schedule": "0 6 * * *" }
+  ]
+}

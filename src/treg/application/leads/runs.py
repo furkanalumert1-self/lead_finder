@@ -350,16 +350,29 @@ def spawn(run_id: int, registry: Registry) -> None:
     task.add_done_callback(_tasks.discard)
 
 
-async def recover_interrupted() -> int:
-    """Runs left `running`/`queued` by a crash or restart end as failed, never resumed twice.
-    Their open reservations become uncertain: the call may have been billed."""
+# A run older than this is dead in serverless mode: the function that ran it has hit its maximum
+# duration (Vercel: 300 s) long before. Local mode recovers every open run at startup instead.
+STALE_AFTER = timedelta(minutes=15)
+
+
+async def recover_interrupted(older_than: timedelta | None = None) -> int:
+    """Runs left `running`/`queued` by a crash, restart or killed function end as failed, never
+    resumed twice. Their open reservations become uncertain: the call may have been billed.
+    `older_than=None` takes every open run (one process, at its startup); otherwise only runs
+    created before that age, so a run another instance is executing right now is left alone."""
     from ...models import LeadSpend
     async with session_maker() as db:
-        stale = list((await db.execute(select(LeadRun).where(LeadRun.status.in_(("running", "queued"))))).scalars())
+        q = select(LeadRun).where(LeadRun.status.in_(("running", "queued")))
+        if older_than is not None:
+            q = q.where(LeadRun.created_at < _now() - older_than)
+        stale = list((await db.execute(q)).scalars())
         for run in stale:
             run.status, run.finished_at = "failed", _now()
             run.issues = [*run.issues, _issue("interrupted", "Sunucu yeniden başladı; koşu yarıda kaldı")]
-        for spend in (await db.execute(select(LeadSpend).where(LeadSpend.state == "reserved"))).scalars():
+        spends = select(LeadSpend).where(LeadSpend.state == "reserved")
+        if older_than is not None:
+            spends = spends.where(LeadSpend.created_at < _now() - older_than)
+        for spend in (await db.execute(spends)).scalars():
             spend.state, spend.settled_at = "uncertain", _now()
         await db.commit()
         return len(stale)

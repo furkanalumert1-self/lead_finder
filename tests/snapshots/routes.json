@@ -1862,6 +1862,15 @@
       "GET",
       "HEAD"
     ],
+    "name": "cron",
+    "path": "/leads/api/cron"
+  },
+  {
+    "kind": "APIRoute",
+    "methods": [
+      "GET",
+      "HEAD"
+    ],
     "name": "list_runs",
     "path": "/leads/api/runs"
   },
