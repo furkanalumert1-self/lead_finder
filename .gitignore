@@ -11,6 +11,7 @@ __pycache__/
 *.bak
 .env
 .env.*
+!.env.leads.example
 .secret/
 .secrets/
 .pytest_cache/
@@ -105,3 +106,5 @@ node_modules
 # Global Vue runtime copied from the npm lockfile during the frontend build.
 /src/treg/web/vendor/*.js
 /src/treg/web/vendor/LICENSE
+/backups/
+*.before-restore

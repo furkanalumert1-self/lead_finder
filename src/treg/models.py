@@ -2123,3 +2123,179 @@ class OnboardingProfile(SQLModel, table=True):
     house_cost_micro: int = Field(default=0, sa_column=Column(BigInteger, nullable=False, server_default="0"))
     created_at: NaiveUTC = Field(default_factory=_now)
     finished_at: NaiveUTC | None = None
+
+
+# ---- Lead Radar: a single team's lead panel (domain/leads, application/leads) -----------------
+# Every row carries `org_id` and every query filters on it. `application.leads` is the only writer
+# of these tables. Amounts are integer micro-USD, like money; they are the team's PROVIDER spend
+# (its own keys), never treg balance.
+
+class LeadIcp(SQLModel, table=True):
+    """Who the team sells to. Missing fields stay empty and score as "unknown", never as a fit."""
+    id: int | None = Field(default=None, primary_key=True)
+    org_id: int = Field(foreign_key="org.id", index=True)
+    name: str
+    product: str = ""
+    website: str = ""
+    sectors: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    geographies: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    sizes: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    roles: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    problems: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    competitors: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    exclusions: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    created_at: NaiveUTC = Field(default_factory=_now)
+    updated_at: NaiveUTC = Field(default_factory=_now)
+
+
+class LeadCampaign(SQLModel, table=True):
+    """Queries against one discovery source, with the run's limits and its money cap."""
+    id: int | None = Field(default=None, primary_key=True)
+    org_id: int = Field(foreign_key="org.id", index=True)
+    icp_id: int | None = Field(default=None, foreign_key="leadicp.id")
+    name: str
+    provider: str = "demo"               # discovery adapter key
+    enrich_provider: str = ""            # "" = no enrichment
+    signal_type: str = "content"         # content | hiring
+    queries: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    date_range_days: int = 30
+    result_limit: int = 20
+    enrich_limit: int = 5
+    budget_run_micro: int = 0
+    status: str = "draft"                # draft | active | paused
+    schedule_daily: bool = False
+    schedule_hour: int = 9               # Europe/Istanbul local hour
+    created_at: NaiveUTC = Field(default_factory=_now)
+    updated_at: NaiveUTC = Field(default_factory=_now)
+
+
+class LeadRun(SQLModel, table=True):
+    """One execution of a campaign. `slot` is the scheduled day (YYYY-MM-DD, Europe/Istanbul) for a
+    scheduled run, so a restart can never start the same day twice; manual runs leave it NULL."""
+    __table_args__ = (UniqueConstraint("campaign_id", "slot", name="uq_leadrun_campaign_slot"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    org_id: int = Field(foreign_key="org.id", index=True)
+    campaign_id: int = Field(foreign_key="leadcampaign.id", index=True)
+    trigger: str = "manual"              # manual | scheduled
+    slot: str | None = None
+    status: str = "queued"               # queued | running | succeeded | partial | failed | stopped
+    stop_requested: bool = False
+    provider: str = ""
+    demo: bool = False
+    candidates: int = 0
+    qualified: int = 0
+    new_leads: int = 0
+    enriched: int = 0
+    api_cost_micro: int = 0
+    llm_cost_micro: int = 0
+    issues: list[dict] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    created_at: NaiveUTC = Field(default_factory=_now)
+    started_at: NaiveUTC | None = None
+    finished_at: NaiveUTC | None = None
+
+
+class Lead(SQLModel, table=True):
+    """A person or company worth a conversation, merged across runs by `dedup_key`. A new run adds
+    evidence and refreshes the score; it never touches `status` or `note`."""
+    __table_args__ = (UniqueConstraint("org_id", "dedup_key", name="uq_lead_org_dedup"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    org_id: int = Field(foreign_key="org.id", index=True)
+    campaign_id: int | None = Field(default=None, foreign_key="leadcampaign.id")
+    dedup_key: str
+    company: str = ""
+    domain: str = ""
+    person_name: str = ""
+    person_role: str = ""
+    person_url: str = ""
+    location: str = ""
+    signal_type: str = ""
+    signal_date: str = ""                # YYYY-MM-DD as the source states it; "" = unknown
+    summary: str = ""
+    fit_reason: str = ""
+    score: int = 0
+    score_fit: int = 0
+    score_signal: int = 0
+    score_recency: int = 0
+    score_notes: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    qualified: bool = False
+    email: str = ""
+    email_status: str = ""               # "" | found | verified | not_found | skipped
+    provider: str = ""
+    demo: bool = False
+    last_enriched_at: NaiveUTC | None = None
+    status: str = "new"                  # new | review | fit | contacted | replied | won | dropped
+    note: str = ""
+    discovered_at: NaiveUTC = Field(default_factory=_now)
+    updated_at: NaiveUTC = Field(default_factory=_now)
+
+
+class LeadEvidence(SQLModel, table=True):
+    """One source that backs a lead. A lead without evidence never counts as qualified."""
+    __table_args__ = (UniqueConstraint("lead_id", "url", name="uq_leadevidence_lead_url"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    org_id: int = Field(foreign_key="org.id", index=True)
+    lead_id: int = Field(foreign_key="lead.id", index=True)
+    run_id: int | None = Field(default=None, foreign_key="leadrun.id")
+    url: str
+    title: str = ""
+    snippet: str = ""
+    signal_date: str = ""
+    provider: str = ""
+    found_at: NaiveUTC = Field(default_factory=_now)
+
+
+class LeadSuppression(SQLModel, table=True):
+    """Do-not-contact: an email, a domain or a profile URL. Suppressed people are never enriched."""
+    __table_args__ = (UniqueConstraint("org_id", "kind", "value", name="uq_leadsuppression_value"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    org_id: int = Field(foreign_key="org.id", index=True)
+    kind: str                            # email | domain | person_url
+    value: str
+    reason: str = ""
+    created_at: NaiveUTC = Field(default_factory=_now)
+
+
+class LeadSettings(SQLModel, table=True):
+    """The team's spend limits and data rules. The row is also the budget lock: a reservation
+    UPDATEs it first, so two concurrent reservations for one team serialize on it."""
+    org_id: int = Field(foreign_key="org.id", primary_key=True)
+    run_limit_micro: int = 0
+    day_limit_micro: int = 0
+    month_limit_micro: int = 0
+    retention_days: int = 365
+    cache_ttl_hours: dict = Field(default_factory=dict, sa_column=Column(JSON, nullable=False))
+    prices_micro: dict = Field(default_factory=dict, sa_column=Column(JSON, nullable=False))
+    lock_version: int = 0
+    updated_at: NaiveUTC = Field(default_factory=_now)
+
+
+class LeadSpend(SQLModel, table=True):
+    """One provider call's money: reserved before the call at its price ceiling, then settled to
+    what it cost. A call whose outcome is unknown (timeout) stays `uncertain` at its reserve."""
+    id: int | None = Field(default=None, primary_key=True)
+    org_id: int = Field(foreign_key="org.id", index=True)
+    run_id: int | None = Field(default=None, foreign_key="leadrun.id", index=True)
+    provider: str
+    kind: str = "api"                    # api | llm
+    state: str = "reserved"              # reserved | settled | released | uncertain
+    reserved_micro: int = 0
+    actual_micro: int = 0
+    created_at: NaiveUTC = Field(default_factory=_now, index=True)
+    settled_at: NaiveUTC | None = None
+
+
+class LeadCache(SQLModel, table=True):
+    """A provider answer kept for its source's TTL, keyed by a hash of (provider, request)."""
+    __table_args__ = (UniqueConstraint("org_id", "key", name="uq_leadcache_org_key"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    org_id: int = Field(foreign_key="org.id", index=True)
+    key: str
+    provider: str
+    payload: dict = Field(default_factory=dict, sa_column=Column(JSON, nullable=False))
+    created_at: NaiveUTC = Field(default_factory=_now)
+    expires_at: NaiveUTC

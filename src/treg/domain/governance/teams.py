@@ -11,6 +11,15 @@ from sqlmodel import select
 
 from ...models import (
     AdConversion,
+    Lead,
+    LeadCache,
+    LeadCampaign,
+    LeadEvidence,
+    LeadIcp,
+    LeadRun,
+    LeadSettings,
+    LeadSpend,
+    LeadSuppression,
     ApiKey,
     ApiKeyEvent,
     ApiKeySpendDay,
@@ -269,6 +278,9 @@ ORG_SCOPED_MODELS = (
     CallReview,
     Media,        # hosted reference files expire on their own; a deleted team's go now
     AdConversion,  # pending Google Ads conversions belong to the team they'd be attributed to
+    # Lead Radar, children first: evidence and spend name a run, a lead names a campaign.
+    LeadEvidence, LeadSpend, LeadCache, Lead, LeadRun, LeadCampaign, LeadIcp, LeadSuppression,
+    LeadSettings,
     Membership,   # last: it is what makes the caller a member of the org being deleted
 )
 

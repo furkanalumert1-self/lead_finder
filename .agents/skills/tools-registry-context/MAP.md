@@ -39,6 +39,7 @@ Regenerate via `scripts/build-map.py`.
 | `frontend/src/components/PublicNavigation.vue` | interface/seo.md |
 | `frontend/src/components/SignedOutPage.vue` | interface/landing-sandbox.md |
 | `frontend/src/dialogs/WelcomeDialog.vue` | interface/onboarding.md |
+| `frontend/src/leads/` | architecture/lead-radar.md |
 | `frontend/src/onboarding/OnboardingFlow.vue` | interface/onboarding.md |
 | `frontend/src/onboarding/calls.ts` | interface/onboarding.md |
 | `frontend/src/onboarding/extract.ts` | interface/onboarding.md |
@@ -89,6 +90,7 @@ Regenerate via `scripts/build-map.py`.
 | `scripts/frontend-e2e-server.sh` | ops/deploy.md |
 | `scripts/import_arena_verification.py` | interface/enrich-arena.md |
 | `scripts/indexnow_submit.py` | interface/seo.md |
+| `scripts/lead-radar.sh` | architecture/lead-radar.md |
 | `scripts/minimax_plugin.py` | interface/skill.md |
 | `scripts/provider_balances.py` | ops/capacity.md |
 | `scripts/search_agent_bench.py` | architecture/search-experiment.md |
@@ -162,6 +164,7 @@ Regenerate via `scripts/build-map.py`.
 | `src/treg/alembic/versions/0070_api_key_spend_rollup.py` | architecture/data-model.md, architecture/money.md |
 | `src/treg/alembic/versions/0071_signup_promo_claim.py` | architecture/data-model.md, architecture/money.md |
 | `src/treg/alembic/versions/0072_callrecord_call_ref_index.py` | architecture/data-model.md |
+| `src/treg/alembic/versions/0073_lead_radar.py` | architecture/lead-radar.md |
 | `src/treg/analytics.py` | architecture/data-model.md |
 | `src/treg/api.py` | architecture/archive.md, architecture/money.md, architecture/multi-tenancy.md, architecture/proxy-model.md, architecture/super-admin.md, interface/api.md, interface/landing-sandbox.md, interface/seo.md |
 | `src/treg/application/__init__.py` | architecture/import-boundaries.md |
@@ -206,6 +209,11 @@ Regenerate via `scripts/build-map.py`.
 | `src/treg/application/jev_xboost.py` | interface/seo.md |
 | `src/treg/application/key_spend.py` | interface/api.md |
 | `src/treg/application/key_spend_rollup.py` | architecture/money.md |
+| `src/treg/application/leads/budget.py` | architecture/lead-radar.md |
+| `src/treg/application/leads/providers.py` | architecture/lead-radar.md |
+| `src/treg/application/leads/runs.py` | architecture/lead-radar.md |
+| `src/treg/application/leads/scheduler.py` | architecture/lead-radar.md |
+| `src/treg/application/leads/service.py` | architecture/lead-radar.md |
 | `src/treg/application/media.py` | architecture/media.md |
 | `src/treg/application/onboard/__init__.py` | interface/api.md, interface/landing-sandbox.md, interface/onboarding.md |
 | `src/treg/application/onboard/demo.py` | interface/onboarding.md |
@@ -227,7 +235,7 @@ Regenerate via `scripts/build-map.py`.
 | `src/treg/archive.py` | architecture/archive.md |
 | `src/treg/archive_bodies.py` | architecture/archive.md |
 | `src/treg/audit.py` | architecture/data-model.md, ops/deploy.md |
-| `src/treg/bootstrap.py` | architecture/archive.md, architecture/composition.md, architecture/find.md, architecture/org-traffic.md, architecture/policy-extensions.md, interface/enrich-arena.md, interface/web-arena.md |
+| `src/treg/bootstrap.py` | architecture/archive.md, architecture/composition.md, architecture/find.md, architecture/lead-radar.md, architecture/org-traffic.md, architecture/policy-extensions.md, interface/enrich-arena.md, interface/web-arena.md |
 | `src/treg/bootstrap_handlers.py` | architecture/composition.md, architecture/data-model.md, interface/api.md |
 | `src/treg/bootstrap_http.py` | architecture/composition.md, interface/api.md |
 | `src/treg/call_surface.py` | architecture/composition.md, architecture/proxy-model.md, architecture/table.md, interface/api.md |
@@ -423,6 +431,7 @@ Regenerate via `scripts/build-map.py`.
 | `src/treg/domain/identity/mcp_oauth.py` | architecture/composition.md, architecture/mcp-oauth.md, architecture/table.md, interface/api.md |
 | `src/treg/domain/identity/promotions.py` | architecture/money.md, architecture/multi-tenancy.md, architecture/policy-extensions.md |
 | `src/treg/domain/identity/session.py` | architecture/composition.md, architecture/mcp-oauth.md, architecture/multi-tenancy.md, interface/api.md |
+| `src/treg/domain/leads/rules.py` | architecture/lead-radar.md |
 | `src/treg/domain/money/__init__.py` | architecture/hub.md, architecture/import-boundaries.md, architecture/money.md |
 | `src/treg/domain/money/settlement.py` | architecture/catalog.md, architecture/money.md |
 | `src/treg/domain/provider_resources.py` | architecture/catalog.md, architecture/data-model.md, architecture/multi-tenancy.md |
@@ -475,7 +484,7 @@ Regenerate via `scripts/build-map.py`.
 | `src/treg/maintenance.py` | architecture/data-model.md, ops/deploy.md |
 | `src/treg/mcp.py` | architecture/catalog.md, architecture/hub.md, architecture/instagram-oauth.md, architecture/mcp-oauth.md, architecture/org-concurrency.md, architecture/org-traffic.md |
 | `src/treg/mcp_install.py` | interface/skill.md |
-| `src/treg/models.py` | architecture/data-model.md, architecture/hub.md, architecture/media.md, architecture/money.md, architecture/multi-tenancy.md, interface/enrich-arena.md, interface/web-arena.md |
+| `src/treg/models.py` | architecture/data-model.md, architecture/hub.md, architecture/lead-radar.md, architecture/media.md, architecture/money.md, architecture/multi-tenancy.md, interface/enrich-arena.md, interface/web-arena.md |
 | `src/treg/oauth.py` | architecture/auth-secrets.md |
 | `src/treg/oauth_providers.py` | architecture/auth-secrets.md, guides/expanding-a-category.md |
 | `src/treg/policy.py` | architecture/money.md, architecture/policy-extensions.md |
@@ -496,6 +505,7 @@ Regenerate via `scripts/build-map.py`.
 | `src/treg/routers/feedback.py` | architecture/feedback.md |
 | `src/treg/routers/hub.py` | architecture/hub.md |
 | `src/treg/routers/hub_gate.py` | architecture/hub.md |
+| `src/treg/routers/leads.py` | architecture/lead-radar.md |
 | `src/treg/routers/media.py` | architecture/media.md, interface/api.md |
 | `src/treg/routers/onboard.py` | architecture/composition.md, interface/api.md, interface/landing-sandbox.md, interface/onboarding.md |
 | `src/treg/routers/orgs.py` | architecture/composition.md, architecture/money.md, architecture/multi-tenancy.md, interface/api.md |
@@ -654,6 +664,7 @@ Regenerate via `scripts/build-map.py`.
 | `tests/test_key_spend_rollup.py` | architecture/money.md |
 | `tests/test_kv.py` | architecture/feedback.md |
 | `tests/test_kv_lease_diagnostics.py` | architecture/data-model.md |
+| `tests/test_leads.py` | architecture/lead-radar.md |
 | `tests/test_marketplace_call.py` | architecture/mcp-oauth.md, architecture/money.md, architecture/proxy-model.md |
 | `tests/test_mcp.py` | architecture/mcp-oauth.md |
 | `tests/test_mcp_directory.py` | architecture/mcp-oauth.md |
@@ -714,6 +725,7 @@ Regenerate via `scripts/build-map.py`.
 | `architecture/hub.md` | `__init__.py`, `manifest.py`, `refs.py`, `graph.py`, `__init__.py`, `runner.py`, `sandbox.py`, `limits.py`, `health.py`, `hub_sandbox.py`, `hub.py`, `catalog.py`, `web.py`, `hub_gate.py`, `service.py`, `__init__.py`, `mcp.py`, `hub.js`, `HubPage.vue`, `HubRunPage.vue`, `cli.py`, `worker.py`, `models.py`, `index.html`, `skill.md`, `llms.txt`, `0044_hub_tools.py`, `0045_hub_runs.py`, `0046_hubtool_check_result.py`, `0047_hubrun_output.py`, `0048_hubtool_data.py`, `0049_hubtool_listed_public_log.py`, `0050_hub_listing.py`, `run.js`, `run.js`, `run.js`, `test_hub.py`, `test_hub_sandbox.py`, `test_hub_run.py` |
 | `architecture/import-boundaries.md` | `pyproject.toml`, `ci.yml`, `__init__.py`, `__init__.py`, `access.py`, `authorize.py`, `idempotency.py`, `overflow.py`, `route.py`, `__init__.py`, `intake.py`, `resolve.py`, `reserve.py`, `settle.py`, `evidence.py`, `service.py`, `types.py`, `client_identity.py`, `__init__.py`, `__init__.py`, `access.py`, `budgets.py`, `publicdemo.py`, `teams.py`, `usage.py`, `__init__.py`, `__init__.py`, `authorization.py`, `oauth_flow.py`, `refresh.py`, `__init__.py`, `__init__.py`, `__init__.py`, `__init__.py`, `__init__.py`, `injectors.py`, `relay.py`, `__init__.py`, `limiter.py`, `test_call_architecture.py`, `test_import_lightness.py` |
 | `architecture/instagram-oauth.md` | `catalog_ingest.py`, `access.py`, `resolve.py`, `service.py`, `instagram.yaml`, `instagram.extended.yaml`, `cli.py`, `store.py`, `authorization.py`, `oauth_flow.py`, `oauth_exchange.py`, `mcp.py`, `call.py`, `connections.js`, `ProviderPage.vue`, `0010_oauth_authorization_method.py`, `test_instagram_oauth_architecture.py` |
+| `architecture/lead-radar.md` | `rules.py`, `providers.py`, `budget.py`, `runs.py`, `scheduler.py`, `service.py`, `leads.py`, `models.py`, `0073_lead_radar.py`, `bootstrap.py`, `leads`, `lead-radar.sh`, `test_leads.py` |
 | `architecture/local-proxy.md` | `localproxy.py`, `server.js` |
 | `architecture/local-run.md` | `localrun.py`, `egress.py`, `fsjail.py` |
 | `architecture/mcp-oauth.md` | `auth.py`, `mcp.py`, `health.py`, `mcp_oauth.py`, `session.py`, `access.py`, `api_keys.py`, `api_keys.py`, `auth.py`, `claude-connector.html`, `connect-demo.html`, `test_mcp.py`, `test_mcp_oauth.py`, `test_mcp_directory.py`, `test_marketplace_call.py` |

@@ -57,6 +57,10 @@ EXPECTED_MAKERS: dict[str, set[str]] = {
     "application/catalog_search.py": {API},  # the hub read and the per-caller judge cap, each closed before the judge
 
     "application/referrals.py": {API}, "application/signup.py": {API},
+    # Lead Radar: request use cases on the API pool; runs and the daily schedule are background
+    # work (each provider call is made with no session open).
+    "application/leads/service.py": {API},
+    "application/leads/runs.py": {BACKGROUND}, "application/leads/scheduler.py": {BACKGROUND},
     "application/onboard/__init__.py": {API},
     # The first-run lookup: a short write per finished step, never across a GitHub, LLM or call wait.
     "application/onboard/first_run.py": {API},

@@ -1,5 +1,8 @@
 # Treg (OpenRouter for Tools)
 
+> **Bu depoda ek olarak:** Lead Radar, Treg üzerinde çalışan kişisel lead paneli — kurulum ve kullanım
+> için [docs/LEAD-RADAR.md](docs/LEAD-RADAR.md). Aşağısı upstream Treg README'sidir.
+
 ![treg — the tool catalog for your agent](docs/assets/treg-hero.png)
 
 **OpenRouter, but for agent tools instead of models.** Point an agent at one base URL with one token

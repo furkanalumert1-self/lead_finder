@@ -914,6 +914,9 @@ class Settings(BaseSettings):
     # Frictionless local mode: `curl … | sh` brings up a server you are already signed into, with no
     # account, email or password. Only takes effect when `single_user_ok` allows it (see below).
     single_user: bool = False
+    # Lead Radar's daily campaign schedule (Europe/Istanbul), in the server process. Campaigns opt
+    # in one by one; this switch turns the whole schedule off.
+    leads_scheduler: bool = True
     # Where the bootstrapped token is written so the CLI/installer can pick it up (0600).
     single_user_token_file: str = "~/.treg/local-token"
 

@@ -195,6 +195,30 @@ allow_indirect_imports = true
 as_packages = true
 
 [[tool.importlinter.contracts]]
+name = "Leads domain is a leaf: pure rules, no outer layers, no sibling domains, no frameworks"
+type = "forbidden"
+source_modules = ["treg.domain.leads"]
+forbidden_modules = [
+    "treg.api",
+    "treg.bootstrap",
+    "treg.routers",
+    "treg.application",
+    "treg.infra",
+    "treg.models",
+    "treg.domain.catalog",
+    "treg.domain.connections",
+    "treg.domain.governance",
+    "treg.domain.identity",
+    "treg.domain.money",
+    "fastapi",
+    "starlette",
+    "sqlalchemy",
+    "sqlmodel",
+    "httpx",
+]
+as_packages = true
+
+[[tool.importlinter.contracts]]
 name = "Catalog domain is a leaf: no outer layers, no sibling domains"
 type = "forbidden"
 source_modules = ["treg.domain.catalog"]

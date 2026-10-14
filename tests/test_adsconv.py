@@ -647,6 +647,7 @@ async def test_expired_cached_token_triggers_a_fresh_exchange(monkeypatch, ads_e
 # every entry here is a decision with a reason, not a backlog — and the test below fails if one of
 # these paths stops existing, which is what keeps the list from outliving the pages it excuses.
 CAPTURE_EXEMPT = {
+    "/leads": "Lead Radar, a signed-in work panel for one team; never an ad destination",
     "/terms": "legal boilerplate; reached from the footer, never from an ad",
     "/support": "same, and it is a support surface rather than a marketing one",
     "/contact": "same",

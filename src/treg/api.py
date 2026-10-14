@@ -66,6 +66,7 @@ from .routers import media as media_routes
 from .routers import onboard as onboard_routes
 from .routers import orgs as org_routes
 from .routers import provider_resources as provider_resource_routes
+from .routers import leads as lead_routes
 from .routers import referrals as referral_routes
 from .routers import resources as resources_routes
 from .routers import table as table_routes
@@ -353,6 +354,7 @@ router.routes.extend(billing_routes.balance_router.routes)
 router.routes.extend(org_routes.tag_controls_router.routes)
 router.routes.extend(billing_routes.billing_router.routes)
 router.routes.extend(referral_routes.router.routes)
+router.routes.extend(lead_routes.router.routes)
 router.routes.extend(billing_routes.webhook_router.routes)
 router.routes.extend(org_routes.member_management_router.routes)
 router.routes.extend(org_routes.machine_identity_router.routes)

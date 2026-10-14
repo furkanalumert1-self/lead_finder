@@ -25,6 +25,7 @@ from . import adsconv, analytics, archive, audit
 from .application.call import route as routed_call
 from .application import arena, find_index
 from .application.onboard import first_run
+from .application.leads import scheduler as leads_scheduler
 from . import bootstrap_handlers, policy
 from .bootstrap_http import (
     _BodyDecodeMiddleware,
@@ -376,6 +377,36 @@ _CONTROL_ROUTE_KEYS: frozenset[RouteKey] = frozenset({
     ('/admin/referrals', ('GET',), 'admin_referrals'),
     ('/catalog/endpoints/{endpoint_id}/access', ('GET',), 'catalog_endpoint_access'),
     ('/run', ('POST',), 'run_tool_server'),
+    # Lead Radar: the page and its team-scoped API (routers/leads.py).
+    ('/leads', ('GET',), 'leads_page'),
+    ('/leads/api/campaigns', ('GET',), 'list_campaigns'),
+    ('/leads/api/campaigns', ('POST',), 'create_campaign'),
+    ('/leads/api/campaigns/{campaign_id}', ('DELETE',), 'delete_campaign'),
+    ('/leads/api/campaigns/{campaign_id}', ('PUT',), 'update_campaign'),
+    ('/leads/api/campaigns/{campaign_id}/run', ('POST',), 'run_campaign'),
+    ('/leads/api/icps', ('GET',), 'list_icps'),
+    ('/leads/api/icps', ('POST',), 'create_icp'),
+    ('/leads/api/icps/{icp_id}', ('PUT',), 'update_icp'),
+    ('/leads/api/leads', ('GET',), 'list_leads'),
+    ('/leads/api/leads', ('POST',), 'add_lead'),
+    ('/leads/api/leads.csv', ('GET',), 'export_csv'),
+    ('/leads/api/leads/delete-demo', ('POST',), 'delete_demo'),
+    ('/leads/api/leads/import', ('POST',), 'import_csv'),
+    ('/leads/api/leads/{lead_id}', ('DELETE',), 'delete_lead'),
+    ('/leads/api/leads/{lead_id}', ('GET',), 'get_lead'),
+    ('/leads/api/leads/{lead_id}', ('PATCH',), 'update_lead'),
+    ('/leads/api/leads/{lead_id}/draft', ('POST',), 'draft'),
+    ('/leads/api/leads/{lead_id}/enrich', ('POST',), 'enrich_lead'),
+    ('/leads/api/overview', ('GET',), 'overview'),
+    ('/leads/api/retention/purge', ('POST',), 'purge'),
+    ('/leads/api/runs', ('GET',), 'list_runs'),
+    ('/leads/api/runs/{run_id}/stop', ('POST',), 'stop_run'),
+    ('/leads/api/settings', ('GET',), 'get_settings'),
+    ('/leads/api/settings', ('PUT',), 'save_settings'),
+    ('/leads/api/sources', ('GET',), 'sources'),
+    ('/leads/api/suppressions', ('GET',), 'list_suppressions'),
+    ('/leads/api/suppressions', ('POST',), 'add_suppression'),
+    ('/leads/api/suppressions/{suppression_id}', ('DELETE',), 'delete_suppression'),
 })
 _DATAPLANE_ROUTE_KEYS: frozenset[RouteKey] = frozenset({
     ("/call/{rest:path}", ("DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"), "call_tool"),
@@ -394,9 +425,9 @@ ROLE_BACKGROUND_TASKS: dict[AppRole, tuple[str, ...]] = {
     # walks `callrecord` on its own schedule, so web processes no longer compete for the cursor
     # row and a deploy no longer multiplies that scan. Only `/arena/insights` (a
     # snapshot read) stays here.
-    "all": ("treg.adsconv.worker",),
+    "all": ("treg.adsconv.worker", "treg.application.leads.scheduler.worker"),
     "dataplane": (),
-    "control": ("treg.adsconv.worker",),
+    "control": ("treg.adsconv.worker", "treg.application.leads.scheduler.worker"),
 }
 ROLE_STARTUP_CHECKS: dict[AppRole, tuple[str, ...]] = {
     "all": (
@@ -691,6 +722,12 @@ def _lifespan(role: AppRole):
                 else None
             )
             gauge_task = asyncio.create_task(pool_gauge()) if analytics.enabled() else None
+            # Lead Radar: recover runs a restart interrupted, then (if enabled) the daily schedule.
+            leads_task = (
+                asyncio.create_task(leads_scheduler.worker(
+                    lambda: app.state.http, enabled=get_settings().leads_scheduler))
+                if ROLE_BACKGROUND_TASKS[role] else None
+            )
             # Local transaction diagnostics run even when the analytics transport is disabled.
             trace_runner = start_money_trace(role=role)
             # The archive's refresh worker (docs/context/architecture/archive.md): serve mode only,
@@ -733,7 +770,7 @@ def _lifespan(role: AppRole):
             finally:
                 try:
                     workers = [task for task in (
-                        gauge_task, ads_task, archive_task, prune_task, find_task,
+                        gauge_task, ads_task, archive_task, prune_task, find_task, leads_task,
                     ) if task is not None]
                     for task in workers:
                         task.cancel()

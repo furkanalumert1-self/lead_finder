@@ -143,6 +143,11 @@ The table domain (`treg.domain.table`, [table](table.md)) is the same kind of le
 in, rows and columns out. Its contract forbids every outer layer, every sibling domain, and the web,
 database and settings libraries, so the converter stays testable on saved answers alone.
 
+The leads domain (`treg.domain.leads`, [lead radar](lead-radar.md)) is the same kind of leaf: the
+rules a lead is judged by (normalization, dedup keys, the 0-100 score, suppression matching, CSV cell
+safety). Its contract forbids every outer layer, every sibling domain, `treg.models`, `treg.infra`,
+and the web, database and HTTP libraries, so every rule is testable on plain values.
+
 The capacity domain (`treg.domain.capacity`, plan step B) is a leaf like identity: it cannot import
 `treg.api`, `treg.routers`, `treg.application`, `treg.bootstrap`, `treg.audit`, FastAPI or Starlette.
 It reads config and writes only its own tables and ratestore keys, from worker-profile commands

@@ -8,7 +8,14 @@ export default defineConfig({
   build: {
     outDir: fileURLToPath(new URL('../src/treg/web/dashboard', import.meta.url)),
     emptyOutDir: true,
-    rolldownOptions: { output: { codeSplitting: { groups: [{ name: 'vue', test: /node_modules\/(?:@vue|vue)\// }] } } },
+    rolldownOptions: {
+      // Lead Radar is a second page of the same build: its own entry, the shared Vue chunk.
+      input: {
+        index: fileURLToPath(new URL('index.html', import.meta.url)),
+        leads: fileURLToPath(new URL('leads.html', import.meta.url)),
+      },
+      output: { codeSplitting: { groups: [{ name: 'vue', test: /node_modules\/(?:@vue|vue)\// }] } },
+    },
   },
   server: {
     host: '127.0.0.1',
