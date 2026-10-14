@@ -141,7 +141,7 @@ sqlalchemy==2.0.51
     #   alembic
     #   sqlmodel
     #   tools-registry
-sqlmodel==0.0.44
+sqlmodel==0.0.48
     # via tools-registry
 sse-starlette==3.4.8
     # via mcp
