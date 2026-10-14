@@ -1,6 +1,6 @@
 aiosqlite==0.22.1
     # via tools-registry
-alembic==1.16.5
+alembic==1.20.0
     # via tools-registry
 annotated-doc==0.0.4
     # via fastapi
