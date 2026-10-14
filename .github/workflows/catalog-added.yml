@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Fetch the base branch
         run: git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
       - uses: astral-sh/setup-uv@v7
